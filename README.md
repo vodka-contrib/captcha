@@ -1,10 +1,11 @@
-# captcha [![Build Status](https://travis-ci.org/vodka-contrib/captcha.svg?branch=master)](https://travis-ci.org/vodka-contrib/captcha)
+# captcha
+
 
 Middleware captcha provides captcha service for [Vodka](https://github.com/insionng/vodka).
 
 ### Installation
 
-	go get github.com/vodka-contrib/captcha
+	go get -u github.com/vodka-contrib/captcha
 
 ## Getting Help
 
