@@ -1,15 +1,14 @@
-# captcha [![Build Status](https://travis-ci.org/go-macaron/captcha.svg?branch=master)](https://travis-ci.org/go-macaron/captcha)
+# captcha [![Build Status](https://travis-ci.org/vodka-contrib/captcha.svg?branch=master)](https://travis-ci.org/vodka-contrib/captcha)
 
-Middleware captcha provides captcha service for [Macaron](https://github.com/go-macaron/macaron).
+Middleware captcha provides captcha service for [Vodka](https://github.com/insionng/vodka).
 
 ### Installation
 
-	go get github.com/go-macaron/captcha
+	go get github.com/vodka-contrib/captcha
 
 ## Getting Help
 
-- [API Reference](https://gowalker.org/github.com/go-macaron/captcha)
-- [Documentation](http://go-macaron.com/docs/middlewares/captcha)
+- [API Reference](https://gowalker.org/github.com/vodka-contrib/captcha)
 
 ## License
 
