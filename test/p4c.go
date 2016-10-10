@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/insionng/vodka"
-	"github.com/insionng/vodka/engine/standard"
-	//"github.com/insionng/vodka/engine/fasthttp"
+	//"github.com/insionng/vodka/engine/standard"
+	"github.com/insionng/vodka/engine/fasthttp"
 	"github.com/insionng/vodka/middleware"
 	"github.com/vodka-contrib/cache"
 	"github.com/vodka-contrib/captcha"
@@ -18,16 +18,13 @@ func main() {
 	v.Use(middleware.Recover())
 	v.Use(cache.VodkaCacher(cache.Options{Adapter: "memory"}))
 	v.Use(captcha.Captchaer())
-
-	r := pongor.Renderor()
-	v.SetRenderer(r)
+	v.SetRenderer(pongor.Renderor())
 
 	v.Get("/", func(self vodka.Context) error {
 		if cpt := self.Get("Captcha"); cpt != nil {
-			fmt.Println("Got:")
-			fmt.Println(cpt)
+			fmt.Println("Got:", cpt)
 		} else {
-			fmt.Println("CPT IS NIL!")
+			fmt.Println("Captcha is nil!")
 		}
 
 		return self.Render(200, "index.html", map[string]interface{}{
@@ -36,6 +33,6 @@ func main() {
 		})
 	})
 
-	//v.Run(fasthttp.New(":7891"))
-	v.Run(standard.New(":1987"))
+	v.Run(fasthttp.New(":7891"))
+	//v.Run(standard.New(":1987"))
 }
