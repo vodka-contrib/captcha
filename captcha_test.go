@@ -37,8 +37,7 @@ func Test_Captcha(t *testing.T) {
 	Convey("Captch service", t, func() {
 
 		v := vodka.New()
-		cacheOpt := cache.Options{Adapter: "memory"}
-		v.Use(cache.VodkaCacher(cacheOpt))
+		v.Use(cache.VodkaCacher(cache.Options{Adapter: "memory"}))
 		v.Use(Captchaer())
 		v.Get("/", func(c vodka.Context) error {
 			return c.String(http.StatusOK, "")

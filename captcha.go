@@ -44,7 +44,7 @@ type Captcha struct {
 	store            cache.Cache
 	SubURL           string
 	URLPrefix        string
-	FieldIdName      string
+	FieldIDName      string
 	FieldCaptchaName string
 	StdWidth         int
 	StdHeight        int
@@ -63,7 +63,7 @@ func (c *Captcha) genRandChars() string {
 	return string(com.RandomCreateBytes(c.ChallengeNums, defaultChars...))
 }
 
-//CreateHTML tempalte func for output html
+// CreateHTML tempalte func for output html
 func (c *Captcha) CreateHTML() template.HTML {
 	value, err := c.CreateCaptcha()
 	if err != nil {
@@ -72,7 +72,7 @@ func (c *Captcha) CreateHTML() template.HTML {
 	return template.HTML(fmt.Sprintf(`<input type="hidden" name="%s" value="%s">
 	<a class="captcha" href="javascript:">
 		<img onclick="this.src=('%s%s%s.png?reload='+(new Date()).getTime())" class="captcha-img" src="%s%s%s.png">
-	</a>`, c.FieldIdName, value, c.SubURL, c.URLPrefix, value, c.SubURL, c.URLPrefix, value))
+	</a>`, c.FieldIDName, value, c.SubURL, c.URLPrefix, value, c.SubURL, c.URLPrefix, value))
 }
 
 // CreateCaptcha create a new captcha id
@@ -84,13 +84,13 @@ func (c *Captcha) CreateCaptcha() (string, error) {
 	return id, nil
 }
 
-//VerifyReq verify from a request
+// VerifyReq verify from a request
 func (c *Captcha) VerifyReq(req *http.Request) bool {
 	req.ParseForm()
-	return c.Verify(req.FormValue(c.FieldIdName), req.FormValue(c.FieldCaptchaName))
+	return c.Verify(req.FormValue(c.FieldIDName), req.FormValue(c.FieldCaptchaName))
 }
 
-//Verify direct verify id and challenge string
+// Verify direct verify id and challenge string
 func (c *Captcha) Verify(id string, challenge string) bool {
 	if len(challenge) == 0 || len(id) == 0 {
 		return false
@@ -122,24 +122,32 @@ func (c *Captcha) Verify(id string, challenge string) bool {
 	return true
 }
 
-//Options a captcha's options
+// Options a captcha's options
 type Options struct {
 	// Suburl path. Default is empty.
 	SubURL string
+
 	// URL prefix of getting captcha pictures. Default is "/captcha/".
 	URLPrefix string
+
 	// Hidden input element ID. Default is "captcha_id".
-	FieldIdName string
+	FieldIDName string
+
 	// User input value element name in request form. Default is "captcha".
 	FieldCaptchaName string
+
 	// Challenge number. Default is 6.
 	ChallengeNums int
+
 	// Captcha image width. Default is 240.
 	Width int
+
 	// Captcha image height. Default is 80.
 	Height int
+
 	// Captcha expiration time in seconds. Default is 600.
 	Expiration int64
+
 	// Cache key prefix captcha characters. Default is "captcha_".
 	CachePrefix string
 }
@@ -158,8 +166,8 @@ func prepareOptions(options []Options) Options {
 	} else if opt.URLPrefix[len(opt.URLPrefix)-1] != '/' {
 		opt.URLPrefix += "/"
 	}
-	if len(opt.FieldIdName) == 0 {
-		opt.FieldIdName = "captcha_id"
+	if len(opt.FieldIDName) == 0 {
+		opt.FieldIDName = "captcha_id"
 	}
 	if len(opt.FieldCaptchaName) == 0 {
 		opt.FieldCaptchaName = "captcha"
@@ -188,7 +196,7 @@ func NewCaptcha(opt Options) *Captcha {
 	return &Captcha{
 		SubURL:           opt.SubURL,
 		URLPrefix:        opt.URLPrefix,
-		FieldIdName:      opt.FieldIdName,
+		FieldIDName:      opt.FieldIDName,
 		FieldCaptchaName: opt.FieldCaptchaName,
 		StdWidth:         opt.Width,
 		StdHeight:        opt.Height,
@@ -200,51 +208,53 @@ func NewCaptcha(opt Options) *Captcha {
 
 // Captchaer is a middleware that maps a captcha.Captcha service into the Vodka handler chain.
 // An single variadic captcha.Options struct can be optionally provided to configure.
-// This should be register after cache.Cacher.
+// This should be register after cache.VodkaCacher.
 func Captchaer(options ...Options) vodka.MiddlewareFunc {
 	return func(next vodka.HandlerFunc) vodka.HandlerFunc {
-		return func(ctx vodka.Context) error {
+		return func(self vodka.Context) error {
 			cpt := NewCaptcha(prepareOptions(options))
-			var cc cache.Cache
-			cpt.store = cc
+			cpt.store = cache.Store(self)
 
-			if strings.HasPrefix(ctx.Request().URL().Path(), cpt.URLPrefix) {
+			if strings.HasPrefix(self.Request().URL().Path(), cpt.URLPrefix) {
 				var chars string
-				id := path.Base(ctx.Request().URL().Path())
+				id := path.Base(self.Request().URL().Path())
 				if i := strings.Index(id, "."); i > -1 {
 					id = id[:i]
 				}
 				key := cpt.key(id)
 
 				// Reload captcha.
-				if len(ctx.QueryParam("reload")) > 0 {
+				if len(self.QueryParam("reload")) > 0 {
 					chars = cpt.genRandChars()
 					if err := cpt.store.Put(key, chars, cpt.Expiration); err != nil {
-						ctx.Response().WriteHeader(http.StatusInternalServerError)
-						ctx.Response().Write([]byte("captcha reload error"))
+						self.Response().WriteHeader(http.StatusInternalServerError)
+						self.Response().Write([]byte("captcha reload error"))
 						panic(fmt.Errorf("reload captcha: %v", err))
 					}
 				} else {
 					if v := cpt.store.Get(key); len(v) > 0 {
 						chars = v
 					} else {
-						ctx.Response().WriteHeader(http.StatusNotFound)
-						ctx.Response().Write([]byte("captcha not found"))
-						return next(ctx) //return
+						self.Response().WriteHeader(http.StatusNotFound)
+						self.Response().Write([]byte("captcha not found"))
+						return nil
 					}
 				}
 
-				if _, err := NewImage([]byte(chars), cpt.StdWidth, cpt.StdHeight).WriteTo(ctx.Response().Writer()); err != nil {
+				self.Response().Header().Set("Content-Type", "image/png")
+				if _, err := NewImage([]byte(chars), cpt.StdWidth, cpt.StdHeight).WriteTo(self.Response().Writer()); err != nil {
 					panic(fmt.Errorf("fail to write captcha: %v", err))
 				}
-				return next(ctx) //	return
+				return nil
 			}
 
-			//ctx.Data["Captcha"] = cpt
-			//ctx.Map(cpt)
-			ctx.Set("Captcha", cpt)
+			self.Set("Captcha", cpt)
 
-			return next(ctx)
+			if err := next(self); err != nil {
+				return err
+			}
+
+			return nil
 		}
 	}
 }
