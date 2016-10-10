@@ -16,7 +16,7 @@ func main() {
 	v := vodka.New()
 	v.Use(middleware.Logger())
 	v.Use(middleware.Recover())
-	v.Use(cache.VodkaCacher(cache.Options{Adapter: "memory"}))
+	v.Use(cache.Cacher(cache.Options{Adapter: "memory"}))
 	v.Use(captcha.Captchaer())
 	v.SetRenderer(pongor.Renderor())
 

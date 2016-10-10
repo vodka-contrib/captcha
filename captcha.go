@@ -208,7 +208,7 @@ func NewCaptcha(opt Options) *Captcha {
 
 // Captchaer is a middleware that maps a captcha.Captcha service into the Vodka handler chain.
 // An single variadic captcha.Options struct can be optionally provided to configure.
-// This should be register after cache.VodkaCacher.
+// This should be register after cache.Cacher.
 func Captchaer(options ...Options) vodka.MiddlewareFunc {
 	return func(next vodka.HandlerFunc) vodka.HandlerFunc {
 		return func(self vodka.Context) error {
@@ -249,12 +249,7 @@ func Captchaer(options ...Options) vodka.MiddlewareFunc {
 			}
 
 			self.Set("Captcha", cpt)
-
-			if err := next(self); err != nil {
-				return err
-			}
-
-			return nil
+			return next(self)
 		}
 	}
 }
