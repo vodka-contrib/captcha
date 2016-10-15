@@ -27,10 +27,8 @@ func main() {
 			fmt.Println("Captcha is nil!")
 		}
 
-		return self.Render(200, "index.html", map[string]interface{}{
-			"title":   "你好，世界",
-			"Captcha": self.Get("Captcha"),
-		})
+		self.Set("title", "你好，世界")
+		return self.Render(200, "index.html")
 	})
 
 	v.Run(fasthttp.New(":7891"))

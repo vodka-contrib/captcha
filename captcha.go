@@ -78,7 +78,7 @@ func (c *Captcha) CreateHTML() template.HTML {
 // CreateCaptcha create a new captcha id
 func (c *Captcha) CreateCaptcha() (string, error) {
 	id := string(com.RandomCreateBytes(15))
-	if err := c.store.Put(c.key(id), c.genRandChars(), c.Expiration); err != nil {
+	if err := c.store.Set(c.key(id), c.genRandChars(), c.Expiration); err != nil {
 		return "", err
 	}
 	return id, nil
@@ -100,9 +100,7 @@ func (c *Captcha) Verify(id string, challenge string) bool {
 
 	key := c.key(id)
 
-	if v := c.store.Get(key); len(v) > 0 {
-		chars = v
-	} else {
+	if c.store.Get(key, &chars); len(chars) == 0 {
 		return false
 	}
 
@@ -226,15 +224,13 @@ func Captchaer(options ...Options) vodka.MiddlewareFunc {
 				// Reload captcha.
 				if len(self.QueryParam("reload")) > 0 {
 					chars = cpt.genRandChars()
-					if err := cpt.store.Put(key, chars, cpt.Expiration); err != nil {
+					if err := cpt.store.Set(key, chars, cpt.Expiration); err != nil {
 						self.Response().WriteHeader(http.StatusInternalServerError)
 						self.Response().Write([]byte("captcha reload error"))
 						panic(fmt.Errorf("reload captcha: %v", err))
 					}
 				} else {
-					if v := cpt.store.Get(key); len(v) > 0 {
-						chars = v
-					} else {
+					if cpt.store.Get(key, &chars); len(chars) == 0 {
 						self.Response().WriteHeader(http.StatusNotFound)
 						self.Response().Write([]byte("captcha not found"))
 						return nil
