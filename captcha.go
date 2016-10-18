@@ -85,9 +85,8 @@ func (c *Captcha) CreateCaptcha() (string, error) {
 }
 
 // VerifyReq verify from a request
-func (c *Captcha) VerifyReq(req *http.Request) bool {
-	req.ParseForm()
-	return c.Verify(req.FormValue(c.FieldIDName), req.FormValue(c.FieldCaptchaName))
+func (c *Captcha) VerifyReq(self vodka.Context) bool {
+	return c.Verify(self.FormValue(c.FieldIDName), self.FormValue(c.FieldCaptchaName))
 }
 
 // Verify direct verify id and challenge string
